@@ -287,47 +287,7 @@ def get_test_execution_tags():
         return get_env('behave_tags')
 
 
-def detect_tag_expression_format(expression):
-    """
-    Auto-detect whether expression uses cucumber tag expressions or legacy format.
 
-    Based on behave's auto-detection approach from:
-    https://behave.readthedocs.io/en/latest/tag_expressions/
-
-    Args:
-        expression (str): Tag expression to analyze
-
-    Returns:
-        str: 'cucumber' for v2 expressions, 'legacy' for v1 expressions
-    """
-    if not expression or not expression.strip():
-        return 'legacy'
-
-    # Cucumber v2 indicators (boolean operators with spaces)
-    # Legacy BehaveX uses different patterns, so we can distinguish them
-    cucumber_v2_patterns = [
-        ' and ',          # boolean AND with spaces
-        ' or ',           # boolean OR with spaces
-        'not @',          # NOT operator with tag
-        ') and (',        # grouped expressions with boolean operators
-        ') or (',         # grouped expressions with boolean operators
-        'and not @',      # combined operators
-        'or not @',       # combined operators
-    ]
-
-    # Check for cucumber v2 patterns
-    for pattern in cucumber_v2_patterns:
-        if pattern in expression:
-            return 'cucumber'
-
-    # Check for parentheses with boolean operators (cucumber style)
-    if '(' in expression and ')' in expression:
-        # If it has parentheses with 'and'/'or' but not the legacy "and (" pattern
-        if (' and ' in expression or ' or ' in expression) and 'and (' not in expression:
-            return 'cucumber'
-
-    # Default to legacy format for backward compatibility
-    return 'legacy'
 
 
 def evaluate_cucumber_tag_expression(tags, expression):
@@ -389,11 +349,12 @@ def match_for_execution(tags):
     # Get the tag filter expression
     tags_filter = get_test_execution_tags()
 
-    # Auto-detect expression format
-    expression_format = detect_tag_expression_format(tags_filter)
+    # Use centralized tag expression version detection from GlobalVars
+    from behavex.global_vars import global_vars
+    tag_version = global_vars.tag_expression_version
 
-    # Try cucumber expressions if detected
-    if expression_format == 'cucumber':
+    # Try cucumber expressions if detected as v2
+    if tag_version == 'v2':
         try:
             # For cucumber expressions, we need to handle dry_run ourselves
             # since evaluate_cucumber_tag_expression doesn't do it

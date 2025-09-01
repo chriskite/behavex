@@ -33,8 +33,7 @@ from behavex.execution_singleton import ExecutionSingleton
 from behavex.global_vars import global_vars
 from behavex.outputs import report_html
 from behavex.outputs.output_strings import TEXTS
-from behavex.outputs.report_utils import (detect_tag_expression_format,
-                                          get_save_function, get_string_hash,
+from behavex.outputs.report_utils import (get_save_function, get_string_hash,
                                           match_for_execution,
                                           retry_file_operation)
 
@@ -523,11 +522,11 @@ def set_behave_tags():
         if tag_args and any(tag_arg.strip() for tag_arg in tag_args):
             cucumber_expression = convert_command_line_tags_to_cucumber(tag_args)
 
-            # Use auto-detection to determine the format (same logic as match_for_execution)
+            # Use centralized tag expression version detection from GlobalVars
             if cucumber_expression and cucumber_expression.strip():
-                expression_format = detect_tag_expression_format(cucumber_expression)
+                tag_version = global_vars.tag_expression_version
 
-                if expression_format == 'cucumber':
+                if tag_version == 'v2':
                     # Save as cucumber expression (only if library is available)
                     retry_file_operation(
                         behave_tags, execution=get_save_function(behave_tags, cucumber_expression)
