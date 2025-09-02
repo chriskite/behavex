@@ -22,6 +22,7 @@ import multiprocessing
 import os
 import os.path
 import platform
+import re
 import signal
 import sys
 import time
@@ -1402,6 +1403,11 @@ def _set_behave_arguments(features_path, multiprocess, execution_id=None, featur
     if env_tags and tag_version == 'v2':
         # For v2 expressions, combine user expression with default exclusions
         user_expression = env_tags.replace(';', ' and ')  # Convert semicolons to AND
+
+        # Normalize case for v2 keywords (Behave parser expects lowercase)
+        user_expression = re.sub(r'\bAND\b', 'and', user_expression, flags=re.IGNORECASE)
+        user_expression = re.sub(r'\bOR\b', 'or', user_expression, flags=re.IGNORECASE)
+        user_expression = re.sub(r'\bNOT\b', 'not', user_expression, flags=re.IGNORECASE)
 
         # Check if WIP tests should be run
         if 'WIP' in env_tags.upper() or '@WIP' in env_tags.upper():

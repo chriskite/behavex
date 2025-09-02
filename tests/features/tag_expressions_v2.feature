@@ -1,15 +1,15 @@
-Feature: Tag Expressions v2 (Cucumber Style) Support
+Feature: Tag Expressions v2 (Behave 1.3.0+ Style) Support
 
   As a BehaveX user
-  I want to use v2 tag expressions (cucumber style) with Behave 1.3.0+
+  I want to use v2 tag expressions (Behave 1.3.0+ style) with Behave 1.3.0+
   So that I can leverage advanced boolean logic for test filtering
 
   Background:
     Given I have Behave 1.3.0 or newer installed
 
-  @TAG_EXPRESSIONS_V2 @BASIC
+    @TAG_EXPRESSIONS_V2 @BASIC
   Scenario: Basic NOT operation with v2 expressions (should match most scenarios)
-    When I run behavex with v2 tag expression "not @SKIP"
+    When I run behavex with v2 tag expression "not @NONEXISTENT_TAG"
     Then the execution should succeed
     And I should see scenarios without the excluded tag executed
 

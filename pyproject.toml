@@ -21,9 +21,7 @@ dependencies = [
     "configobj",
     "minify-html",
     "csscompressor",
-    "packaging",
-    # Cucumber tag expressions support for modern tag filtering
-    "cucumber-tag-expressions>=4.1.0"
+    "packaging"
 ]
 # Entry points are statically defined below
 

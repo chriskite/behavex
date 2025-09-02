@@ -427,129 +427,21 @@ def len_scenarios(feature_file):
     amount_scenarios = 0
     scenarios_instances = get_scenarios_instances(feature.scenarios)
     for scenario in scenarios_instances:
-        # Now using enhanced tag matching with auto-detection and cucumber expressions support
+        # Using enhanced tag matching with version-aware v1/v2 tag expression support
         # (match_for_execution includes both v1 and v2 implementations internally)
         if match_for_execution(get_scenario_tags(scenario)):
             amount_scenarios += 1
     return amount_scenarios
 
 
-def convert_command_line_tags_to_cucumber(tag_args):
-    """
-    Convert command line tag arguments directly to cucumber expression.
-
-    This converts legacy BehaveX tag syntax to cucumber expressions format.
-
-    Args:
-        tag_args (list): List of tag arguments from command line
-
-    Returns:
-        str: Cucumber tag expression
-
-    Examples:
-        ['-t', '@smoke,@regression', '-t', '@critical'] → "(@smoke or @regression) and @critical"
-        ['-t', '~@slow', '-t', '@smoke'] → "not @slow and @smoke"
-        ['-t', '@ui,@api', '-t', '@smoke', '-t', '~@flaky'] → "(@ui or @api) and @smoke and not @flaky"
-    """
-    if not tag_args:
-        return ""
-
-    # Each tag argument becomes an AND group
-    and_groups = []
-
-    for tag_arg in tag_args:
-        tag_arg = tag_arg.strip()
-        if not tag_arg:
-            continue
-
-        # Handle NOT prefix (~)
-        if tag_arg.startswith('~'):
-            tag_arg = tag_arg.replace('~@', 'not @').replace('~', 'not @')
-
-        # Split by comma for OR conditions
-        if ',' in tag_arg:
-            or_conditions = []
-            for tag in tag_arg.split(','):
-                tag = tag.strip()
-                if tag.startswith('~'):
-                    tag = tag.replace('~@', 'not @').replace('~', 'not @')
-                if tag:
-                    or_conditions.append(tag)
-            if or_conditions:
-                if len(or_conditions) == 1:
-                    and_groups.append(or_conditions[0])
-                else:
-                    or_expression = ' or '.join(or_conditions)
-                    and_groups.append(f"({or_expression})")
-        else:
-            # Single tag
-            if tag_arg:
-                and_groups.append(tag_arg)
-
-    # Join all groups with AND
-    if not and_groups:
-        return ""
-    elif len(and_groups) == 1:
-        return and_groups[0]
-    else:
-        return ' and '.join(and_groups)
-
 
 def set_behave_tags():
     """
-    Enhanced version that creates cucumber expressions with fallback to legacy processing.
+    Create behave.tags file for tag filtering.
 
-    This function uses auto-detection to determine whether to use cucumber expressions
-    or legacy format, ensuring consistency with match_for_execution().
+    Uses the legacy tag processing implementation which is compatible with all Behave versions.
     """
-    behave_tags = os.path.join(get_env('OUTPUT'), 'behave', 'behave.tags')
-
-    # Try cucumber expression approach first, but only if library is available
-    try:
-        # Import check: only proceed if cucumber-tag-expressions is available
-        from behavex.outputs.report_utils import cucumber_parse
-        if cucumber_parse is None:
-            # Library not available, use legacy processing
-            logging.debug("cucumber-tag-expressions library not available, using legacy tag processing")
-            set_behave_tags_legacy()
-            return
-
-        # Get tag arguments and convert to cucumber expression
-        tags_env = get_env('tags')
-        tag_args = tags_env.split(';') if tags_env else []
-
-        # Only proceed if we have valid tag arguments
-        if tag_args and any(tag_arg.strip() for tag_arg in tag_args):
-            cucumber_expression = convert_command_line_tags_to_cucumber(tag_args)
-
-            # Use centralized tag expression version detection from GlobalVars
-            if cucumber_expression and cucumber_expression.strip():
-                tag_version = global_vars.tag_expression_version
-
-                if tag_version == 'v2':
-                    # Save as cucumber expression (only if library is available)
-                    retry_file_operation(
-                        behave_tags, execution=get_save_function(behave_tags, cucumber_expression)
-                    )
-                    return
-                else:
-                    # Expression is detected as legacy, use legacy processing
-                    logging.debug("Expression detected as legacy format, using legacy tag processing")
-                    set_behave_tags_legacy()
-                    return
-
-        # If no tags or empty expression, create empty file (like legacy does)
-        retry_file_operation(
-            behave_tags, execution=get_save_function(behave_tags, '')
-        )
-        return
-
-    except Exception as e:
-        # Fall back to legacy processing if cucumber conversion fails
-        logging.debug(f"Cucumber tag conversion failed: {e}, using legacy tag processing")
-        pass
-
-    # Fallback to legacy implementation
+    # Use the legacy implementation directly since we no longer use external libraries
     set_behave_tags_legacy()
 
 

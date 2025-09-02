@@ -348,7 +348,7 @@ def match_for_execution(tags):
         if behave_version < (1, 3, 0):
             # Behave 1.2.6: v2 expressions not supported
             raise RuntimeError(
-                "Tag expressions v2 (cucumber style) are not supported with Behave 1.2.6. "
+                "Tag expressions v2 (Behave 1.3.0+ style) are not supported with Behave 1.2.6. "
                 "Please upgrade to Behave 1.3.0+ or use v1 tag expressions (legacy format). "
                 f"Current Behave version: {'.'.join(map(str, behave_version))}"
             )
@@ -437,8 +437,13 @@ def match_for_execution_v2(tags, tags_filter):
         )
 
     try:
+        # Normalize case for v2 keywords (Behave parser expects lowercase)
+        normalized_filter = re.sub(r'\bAND\b', 'and', tags_filter, flags=re.IGNORECASE)
+        normalized_filter = re.sub(r'\bOR\b', 'or', normalized_filter, flags=re.IGNORECASE)
+        normalized_filter = re.sub(r'\bNOT\b', 'not', normalized_filter, flags=re.IGNORECASE)
+
         # Parse the tag expression using Behave's native parser
-        tag_expression = make_tag_expression(tags_filter)
+        tag_expression = make_tag_expression(normalized_filter)
 
         # Convert tags to format expected by Behave parser (WITH @)
         # Behave parser expects tag names WITH @ prefix

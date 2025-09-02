@@ -124,10 +124,10 @@ class GlobalVars(metaclass=ExecutionSingleton):
         """
         Get the tag expression version (lazy loaded, calculated only once).
 
-        Analyzes all tag arguments to determine if they use v1 (legacy) or v2 (cucumber) syntax.
+        Analyzes all tag arguments to determine if they use v1 (legacy) or v2 (Behave 1.3.0+) syntax.
 
         Returns:
-            str: 'v1' for legacy format, 'v2' for cucumber format, 'v1' as default
+            str: 'v1' for legacy format, 'v2' for Behave 1.3.0+ format, 'v1' as default
         """
         if self._tag_expression_version is None:
             self._tag_expression_version = _detect_tag_expression_version()
@@ -164,7 +164,7 @@ def _detect_tag_expression_version():
     If any v2 patterns are found, returns 'v2', otherwise 'v1'.
 
     Returns:
-        str: 'v1' for legacy format, 'v2' for cucumber format
+        str: 'v1' for legacy format, 'v2' for Behave 1.3.0+ format
     """
     try:
         # Import here to avoid circular imports
