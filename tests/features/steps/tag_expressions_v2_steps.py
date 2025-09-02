@@ -2,6 +2,7 @@
 import logging
 import os
 import subprocess
+import sys
 import time
 
 from behave import given, then, when
@@ -39,7 +40,7 @@ def step_run_behavex_with_v2_expression(context, tag_expression):
 
     # Use secondary features as test target
     cmd = [
-        '/Library/Frameworks/Python.framework/Versions/3.9/bin/python3', '-m', 'behavex',
+        sys.executable, '-m', 'behavex',
         secondary_features_path,
         '-o', f'output/v2_test_{hash(tag_expression) % 1000000}',
         '-t', tag_expression,
@@ -71,7 +72,7 @@ def step_run_behavex_with_v1_expression(context, tag_expression):
 
     # Use secondary features as test target
     cmd = [
-        '/Library/Frameworks/Python.framework/Versions/3.9/bin/python3', '-m', 'behavex',
+        sys.executable, '-m', 'behavex',
         secondary_features_path,
         '-o', f'output/v1_test_{hash(tag_expression) % 1000000}',
         '-t', tag_expression,
@@ -103,7 +104,7 @@ def step_run_behavex_with_invalid_v2_expression(context, tag_expression):
 
     # Use secondary features as test target
     cmd = [
-        '/Library/Frameworks/Python.framework/Versions/3.9/bin/python3', '-m', 'behavex',
+        sys.executable, '-m', 'behavex',
         secondary_features_path,
         '-o', f'output/v2_invalid_test_{hash(tag_expression) % 1000000}',
         '-t', tag_expression,
@@ -132,7 +133,7 @@ def step_run_behavex_with_empty_expression(context, tag_expression):
 
     # Use secondary features as test target
     cmd = [
-        '/Library/Frameworks/Python.framework/Versions/3.9/bin/python3', '-m', 'behavex',
+        sys.executable, '-m', 'behavex',
         secondary_features_path,
         '-o', f'output/empty_test_{hash(str(time.time())) % 1000000}',
         '--logging_level', 'INFO'
@@ -162,7 +163,7 @@ def step_run_behavex_with_complex_v2_expression(context, tag_expression):
 
     # Use secondary features as test target
     cmd = [
-        '/Library/Frameworks/Python.framework/Versions/3.9/bin/python3', '-m', 'behavex',
+        sys.executable, '-m', 'behavex',
         secondary_features_path,
         '-o', f'output/v2_complex_test_{hash(tag_expression) % 1000000}',
         '-t', tag_expression,
@@ -195,7 +196,7 @@ def step_run_behavex_with_multiple_v2_arguments(context, tag_arg1, tag_arg2):
 
     # Use secondary features as test target
     cmd = [
-        '/Library/Frameworks/Python.framework/Versions/3.9/bin/python3', '-m', 'behavex',
+        sys.executable, '-m', 'behavex',
         secondary_features_path,
         '-o', f'output/v2_multiple_test_{hash(context.tag_expression) % 1000000}',
         '-t', tag_arg1,
@@ -229,7 +230,7 @@ def step_run_behavex_with_three_v2_arguments(context, tag_arg1, tag_arg2, tag_ar
 
     # Use secondary features as test target
     cmd = [
-        '/Library/Frameworks/Python.framework/Versions/3.9/bin/python3', '-m', 'behavex',
+        sys.executable, '-m', 'behavex',
         secondary_features_path,
         '-o', f'output/v2_three_test_{hash(context.tag_expression) % 1000000}',
         '-t', tag_arg1,
@@ -264,7 +265,7 @@ def step_run_behavex_with_mixed_arguments(context, tag_arg1, tag_arg2):
 
     # Use secondary features as test target
     cmd = [
-        '/Library/Frameworks/Python.framework/Versions/3.9/bin/python3', '-m', 'behavex',
+        sys.executable, '-m', 'behavex',
         secondary_features_path,
         '-o', f'output/mixed_test_{hash(context.tag_expression) % 1000000}',
         '-t', tag_arg1,
@@ -295,7 +296,7 @@ def step_run_behavex_with_multiple_v1_arguments(context, tag_arg1, tag_arg2):
 
     # Use secondary features as test target
     cmd = [
-        '/Library/Frameworks/Python.framework/Versions/3.9/bin/python3', '-m', 'behavex',
+        sys.executable, '-m', 'behavex',
         secondary_features_path,
         '-o', f'output/v1_multiple_test_{hash(context.tag_expression) % 1000000}',
         '-t', tag_arg1,
