@@ -1395,18 +1395,54 @@ def _set_behave_arguments(features_path, multiprocess, execution_id=None, featur
     arguments.append('--no-junit')
     run_wip_tests = False
     env_tags = get_env('tags')
-    if env_tags:
+
+    # Check if we're using v2 tag expressions
+    tag_version = global_vars.tag_expression_version
+
+    if env_tags and tag_version == 'v2':
+        # For v2 expressions, combine user expression with default exclusions
+        user_expression = env_tags.replace(';', ' and ')  # Convert semicolons to AND
+
+        # Check if WIP tests should be run
+        if 'WIP' in env_tags.upper() or '@WIP' in env_tags.upper():
+            run_wip_tests = True
+
+        # Build combined v2 expression with default exclusions
+        exclusions = []
+        if not run_wip_tests:
+            exclusions.append('not @WIP')
+        exclusions.append('not @MANUAL')
+
+        if exclusions:
+            combined_expression = f"({user_expression}) and {' and '.join(exclusions)}"
+        else:
+            combined_expression = user_expression
+
+        # Add the combined expression as a single tag argument
+        arguments.append('--tags')
+        arguments.append(combined_expression)
+
+    elif env_tags:
+        # For v1 expressions, use the original logic
         tags = env_tags.split(';')
         for tag in tags:
             arguments.append('--tags')
             arguments.append(tag)
             if tag.upper() in ['WIP', '@WIP']:
                 run_wip_tests = True
-    if not run_wip_tests:
+
+        # Add default exclusions in v1 format
+        if not run_wip_tests:
+            arguments.append('--tags')
+            arguments.append('~@WIP')
+        arguments.append('--tags')
+        arguments.append('~@MANUAL')
+    else:
+        # No user tags, just add default exclusions in v1 format
         arguments.append('--tags')
         arguments.append('~@WIP')
-    arguments.append('--tags')
-    arguments.append('~@MANUAL')
+        arguments.append('--tags')
+        arguments.append('~@MANUAL')
 
     # Handle output suppression based on execution mode
     if multiprocess:

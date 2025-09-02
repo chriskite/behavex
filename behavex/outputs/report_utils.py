@@ -31,10 +31,13 @@ try:
 except ImportError:
     from behave.model import Status
 
+# Import Behave's native tag expression parser (available in Behave 1.3.0+)
 try:
-    from cucumber_tag_expressions import parse as cucumber_parse
+    from behave.tag_expression import make_tag_expression
+    behave_tag_parser_available = True
 except ImportError:
-    cucumber_parse = None
+    make_tag_expression = None
+    behave_tag_parser_available = False
 
 
 from behavex.conf_mgr import get_env, get_param, set_env
@@ -290,112 +293,93 @@ def get_test_execution_tags():
 
 
 
-def evaluate_cucumber_tag_expression(tags, expression):
-    """
-    Evaluate cucumber tag expressions (v2 format).
 
-    This function only handles cucumber expressions and doesn't modify
-    the original tags list or handle dry_run logic - that's done by the caller.
-
-    Args:
-        tags (list): List of scenario tags (already processed for dry_run if needed)
-        expression (str): Cucumber tag expression
-
-    Returns:
-        bool: True if tags match the expression
-
-    Raises:
-        ImportError: If cucumber-tag-expressions library not available
-        Exception: If expression parsing fails
-    """
-    if not expression or not expression.strip():
-        return True
-
-    if cucumber_parse is None:
-        raise ImportError("cucumber-tag-expressions library is not available")
-
-    # Parse the cucumber expression
-    tag_expression = cucumber_parse(expression)
-
-    # Convert tags to format expected by cucumber parser (WITH @)
-    # Cucumber parser expects tag names WITH @ prefix
-    normalized_tags = []
-    for tag in tags:
-        if tag:  # Skip empty tags
-            # Ensure tag starts with @ for cucumber parser
-            if not tag.startswith('@'):
-                normalized_tags.append('@' + tag)
-            else:
-                normalized_tags.append(tag)
-
-    # Evaluate the expression
-    return tag_expression.evaluate(normalized_tags)
 
 
 def match_for_execution(tags):
     """
-    Enhanced tag matching with automatic cucumber expressions support.
+    Enhanced tag matching with version-aware tag expression support.
 
-    This function supports both legacy and cucumber formats seamlessly.
-    Falls back to legacy behavior if cucumber expressions fail or aren't available.
-    Preserves the exact dry_run behavior of the original function.
+    Implements the complete decision tree:
+    1. Detect Behave version (from GlobalVars)
+    2. Detect tag expression version (from GlobalVars)
+    3. Apply appropriate logic:
+       - Behave 1.2.6 + v1: Use v1 implementation
+       - Behave 1.2.6 + v2: Raise error (not supported)
+       - Behave 1.3.0+ + v1: Use v1 implementation
+       - Behave 1.3.0+ + v2: Use v2 implementation
 
     Args:
         tags (list): List of scenario tags
 
     Returns:
         bool: True if scenario should be executed based on tag filter
+
+    Raises:
+        RuntimeError: If v2 expressions are used with Behave 1.2.6
     """
+    # Get centralized version information from GlobalVars
+    behave_version = global_vars.behave_version
+    tag_version = global_vars.tag_expression_version
+
     # Get the tag filter expression
     tags_filter = get_test_execution_tags()
 
-    # Use centralized tag expression version detection from GlobalVars
-    from behavex.global_vars import global_vars
-    tag_version = global_vars.tag_expression_version
-
-    # Try cucumber expressions if detected as v2
-    if tag_version == 'v2':
-        try:
-            # For cucumber expressions, we need to handle dry_run ourselves
-            # since evaluate_cucumber_tag_expression doesn't do it
-            tags_copy = tags.copy()  # Don't modify original list
-            if get_param('dry_run'):
-                if 'BHX_MANUAL_DRY_RUN' in tags_copy:
-                    tags_copy.remove('BHX_MANUAL_DRY_RUN')
-                if 'MANUAL' in tags_copy:
-                    tags_copy.remove('MANUAL')
-            return evaluate_cucumber_tag_expression(tags_copy, tags_filter)
-        except ImportError:
-            # Cucumber library not available, fall back to legacy
-            logging.debug("cucumber-tag-expressions not available, using legacy tag matching")
-        except Exception as e:
-            # Cucumber parsing failed, fall back to legacy
-            logging.debug(f"Cucumber tag expression evaluation failed: {e}, using legacy tag matching")
-
-    # Fall back to original legacy implementation
-    # Let the legacy function handle dry_run processing itself
-    return match_for_execution_legacy(tags)
-
-
-def match_for_execution_legacy(tags):
-    """
-    Legacy tag matching implementation using eval() (kept for fallback compatibility).
-    This is the original implementation with security risks but exact behavior preservation.
-    """
-    # Check filter
-    tag_re = re.compile(r'@?[\w\d\-_.]+')
-    tags_filter = get_test_execution_tags()
-
-    # Handle None or empty filter
+    # Handle None or empty filter (common to both v1 and v2)
     if not tags_filter:
         return True
 
-    # Eliminate tags put for param dry-rFun
+    # Handle dry_run processing (common to both v1 and v2)
+    # Create a copy to avoid modifying the original list
+    tags_copy = tags.copy() if isinstance(tags, list) else list(tags)
     if get_param('dry_run'):
-        if 'BHX_MANUAL_DRY_RUN' in tags:
-            tags.remove('BHX_MANUAL_DRY_RUN')
-        if 'MANUAL' in tags:
-            tags.remove('MANUAL')
+        if 'BHX_MANUAL_DRY_RUN' in tags_copy:
+            tags_copy.remove('BHX_MANUAL_DRY_RUN')
+        if 'MANUAL' in tags_copy:
+            tags_copy.remove('MANUAL')
+
+    # Decision tree based on Behave version and tag expression version
+    if tag_version == 'v1':
+        # v1 expressions: Use v1 implementation (works with all Behave versions)
+        return match_for_execution_v1(tags_copy, tags_filter)
+
+    elif tag_version == 'v2':
+        # v2 expressions: Version-dependent behavior
+        if behave_version < (1, 3, 0):
+            # Behave 1.2.6: v2 expressions not supported
+            raise RuntimeError(
+                "Tag expressions v2 (cucumber style) are not supported with Behave 1.2.6. "
+                "Please upgrade to Behave 1.3.0+ or use v1 tag expressions (legacy format). "
+                f"Current Behave version: {'.'.join(map(str, behave_version))}"
+            )
+        else:
+            # Behave 1.3.0+: Use v2 implementation
+            return match_for_execution_v2(tags_copy, tags_filter)
+
+    else:
+        # Fallback: Unknown version, use v1 (should not happen)
+        logging.warning(f"Unknown tag expression version '{tag_version}', falling back to v1 implementation")
+        return match_for_execution_v1(tags_copy, tags_filter)
+
+
+def match_for_execution_v1(tags, tags_filter):
+    """
+    v1 tag matching implementation using eval() (legacy BehaveX format).
+
+    Supports legacy tag expressions like:
+    - ~@tag (NOT)
+    - @tag1,@tag2 (OR)
+    - Multiple -t arguments (AND)
+
+    Args:
+        tags (list): List of scenario tags (already processed for dry_run)
+        tags_filter (str): Tag filter expression in v1 format
+
+    Returns:
+        bool: True if tags match the filter expression
+    """
+    # Check filter regex pattern
+    tag_re = re.compile(r'@?[\w\d\-_.]+')
 
     # Set scenario tags in filter
     for tag in tags:
@@ -416,6 +400,66 @@ def match_for_execution_legacy(tags):
                 tags_filter = tags_filter.replace(tag + ' ', 'False ')
 
     return tags_filter == '' or eval(tags_filter)  # nosec
+
+
+def match_for_execution_v2(tags, tags_filter):
+    """
+    v2 tag matching implementation using Behave's native parser (Cucumber format).
+
+    Supports v2 tag expressions like:
+    - not @tag
+    - @tag1 and @tag2
+    - @tag1 or @tag2
+    - (@tag1 or @tag2) and not @tag3
+
+    Uses Behave's internal tag expression parser instead of external libraries.
+
+    Args:
+        tags (list): List of scenario tags (already processed for dry_run)
+        tags_filter (str): Tag filter expression in v2 format
+
+    Returns:
+        bool: True if tags match the filter expression
+
+    Raises:
+        RuntimeError: If Behave's tag expression parser not available or parsing fails
+    """
+    # Handle empty expression
+    if not tags_filter or not tags_filter.strip():
+        return True
+
+    # Check if Behave's native parser is available
+    if not behave_tag_parser_available or make_tag_expression is None:
+        raise RuntimeError(
+            "Behave's native tag expression parser is not available. "
+            "This should not happen with Behave 1.3.0+. "
+            "Please check your Behave installation."
+        )
+
+    try:
+        # Parse the tag expression using Behave's native parser
+        tag_expression = make_tag_expression(tags_filter)
+
+        # Convert tags to format expected by Behave parser (WITH @)
+        # Behave parser expects tag names WITH @ prefix
+        normalized_tags = []
+        for tag in tags:
+            if tag:  # Skip empty tags
+                # Ensure tag starts with @ for Behave parser
+                if not tag.startswith('@'):
+                    normalized_tags.append('@' + tag)
+                else:
+                    normalized_tags.append(tag)
+
+        # Evaluate the expression using Behave's native evaluator
+        return tag_expression.check(normalized_tags)
+
+    except Exception as e:
+        # Tag expression parsing failed
+        raise RuntimeError(
+            f"Failed to parse v2 tag expression '{tags_filter}': {e}. "
+            "Please check your tag expression syntax."
+        )
 
 
 def copy_bootstrap_html_generator(output):

@@ -428,7 +428,7 @@ def len_scenarios(feature_file):
     scenarios_instances = get_scenarios_instances(feature.scenarios)
     for scenario in scenarios_instances:
         # Now using enhanced tag matching with auto-detection and cucumber expressions support
-        # (match_for_execution is now the enhanced version, legacy version is match_for_execution_legacy)
+        # (match_for_execution includes both v1 and v2 implementations internally)
         if match_for_execution(get_scenario_tags(scenario)):
             amount_scenarios += 1
     return amount_scenarios
