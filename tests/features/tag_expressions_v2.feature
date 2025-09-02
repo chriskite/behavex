@@ -13,71 +13,71 @@ Feature: Tag Expressions v2 (Behave 1.3.0+ Style) Support
     Then the execution should succeed
     And I should see scenarios without the excluded tag executed
 
-  @TAG_EXPRESSIONS_V2 @BASIC
+    @TAG_EXPRESSIONS_V2 @BASIC
   Scenario: Basic OR operation with v2 expressions
-    When I run behavex with v2 tag expression "@AUTORETRY or @PRIORITY_TEST"
+    When I run behavex with v2 tag expression "@PASSING_TAG_1 or @PASSING_TAG_2"
     Then the execution should succeed
-    And I should see scenarios matching the expression executed
+    And I should see scenarios matching the v2 expression
 
   @TAG_EXPRESSIONS_V2 @BASIC
   Scenario: Basic AND operation with v2 expressions (existing combination)
-    When I run behavex with v2 tag expression "@AUTORETRY and @AUTORETRY_RECOVERABLE"
+    When I run behavex with v2 tag expression "@PASSING_TAG_3 and @PASSING_TAG_3_1"
     Then the execution should succeed
-    And I should see scenarios matching the expression executed
+    And I should see scenarios matching the v2 expression
 
   @TAG_EXPRESSIONS_V2 @ADVANCED
   Scenario: Complex AND/OR combination with v2 expressions
-    When I run behavex with v2 tag expression "@PASSING_TAG_1 or @PASSING_TAG_2"
+    When I run behavex with v2 tag expression "@AUTORETRY_3 or @AUTORETRY_5"
     Then the execution should succeed
-    And I should see scenarios matching the expression executed
+    And I should see scenarios matching the v2 expression
 
   @TAG_EXPRESSIONS_V2 @ADVANCED
   Scenario: Complex NOT with AND operation using v2 expressions
     When I run behavex with v2 tag expression "@ORDERED_TEST and not @ORDER_001"
     Then the execution should succeed
-    And I should see scenarios matching the expression executed
+    And I should see scenarios matching the v2 expression
 
   @TAG_EXPRESSIONS_V2 @ADVANCED
   Scenario: Nested parentheses with v2 expressions
-    When I run behavex with v2 tag expression "(@PASSING_TAG_1 or @PASSING_TAG_2) and not @NONEXISTENT"
+    When I run behavex with v2 tag expression "(@AUTORETRY or @PRIORITY_TEST) and not @AUTORETRY_PERMANENT_FAILURE"
     Then the execution should succeed
-    And I should see scenarios matching the expression executed
+    And I should see scenarios matching the v2 expression
 
   @TAG_EXPRESSIONS_V2 @ADVANCED
   Scenario: Multiple AND operations with v2 expressions
     When I run behavex with v2 tag expression "@PRIORITY_TEST and @PRIORITY_001"
     Then the execution should succeed
-    And I should see scenarios matching the expression executed
+    And I should see scenarios matching the v2 expression
 
   @TAG_EXPRESSIONS_V2 @CORNER_CASE
   Scenario: Case insensitive operations with v2 expressions
     When I run behavex with v2 tag expression "@AUTORETRY AND @AUTORETRY_RECOVERABLE"
     Then the execution should succeed
-    And I should see scenarios matching the expression executed
+    And I should see exactly "1" scenarios executed for case insensitive AND
 
   @TAG_EXPRESSIONS_V2 @CORNER_CASE
   Scenario: Mixed case operations with v2 expressions
-    When I run behavex with v2 tag expression "@PASSING_TAG_1 Or @PASSING_TAG_2"
+    When I run behavex with v2 tag expression "@AUTORETRY Or @PRIORITY_TEST"
     Then the execution should succeed
-    And I should see scenarios matching the expression executed
+    And I should see exactly "6" scenarios executed for mixed case OR
 
   @TAG_EXPRESSIONS_V2 @CORNER_CASE
   Scenario: NOT at beginning with v2 expressions
-    When I run behavex with v2 tag expression "NOT @NONEXISTENT and @PASSING_TAG_1"
+    When I run behavex with v2 tag expression "NOT @AUTORETRY_PERMANENT_FAILURE and @AUTORETRY"
     Then the execution should succeed
-    And I should see scenarios matching the expression executed
+    And I should see exactly "2" scenarios executed for NOT at beginning
 
   @TAG_EXPRESSIONS_V2 @CORNER_CASE
   Scenario: Complex expression with multiple parentheses levels
-    When I run behavex with v2 tag expression "((@PRIORITY_TEST and @PRIORITY_001) or (@PASSING_TAG_3 and @PASSING_TAG_3_1)) and not @NONEXISTENT"
+    When I run behavex with v2 tag expression "(@PRIORITY_TEST and @PRIORITY_001) or (@ORDERED_TEST and @ORDER_001)"
     Then the execution should succeed
-    And I should see scenarios matching the expression executed
+    And I should see exactly "2" scenarios executed for multi-level parentheses
 
   @TAG_EXPRESSIONS_V2 @CORNER_CASE
   Scenario: Expression with special characters in tag names
     When I run behavex with v2 tag expression "@IMAGE_ATTACHMENT and @HTML_REPORT"
     Then the execution should succeed
-    And I should see scenarios matching the expression executed
+    And I should see exactly "1" scenarios executed for special characters
 
   @TAG_EXPRESSIONS_V2 @ERROR_HANDLING
   Scenario: Invalid v2 expression syntax should fail gracefully
@@ -115,33 +115,33 @@ Feature: Tag Expressions v2 (Behave 1.3.0+ Style) Support
 
   @TAG_EXPRESSIONS_V2 @PERFORMANCE
   Scenario: Large complex v2 expression should perform well
-    When I run behavex with complex v2 tag expression "(@PASSING_TAG_1 or @PASSING_TAG_2 or @PASSING_TAG_3) and not @NONEXISTENT"
+    When I run behavex with complex v2 tag expression "(@AUTORETRY or @PRIORITY_TEST or @ORDERED_TEST) and not @AUTORETRY_PERMANENT_FAILURE"
     Then the execution should succeed within reasonable time
-    And I should see scenarios matching the expression executed
+    And I should see exactly "8" scenarios executed for complex expression
 
   @TAG_EXPRESSIONS_V2 @MULTIPLE_TAGS
   Scenario: Multiple v2 tag arguments should be merged with AND
     When I run behavex with multiple v2 tag arguments "@AUTORETRY" and "@AUTORETRY_RECOVERABLE"
     Then the execution should succeed
-    And I should see scenarios matching the expression executed
+    And I should see scenarios matching the expression with minimum count "1"
 
   @TAG_EXPRESSIONS_V2 @MULTIPLE_TAGS
   Scenario: Multiple v2 tag arguments with complex expressions
-    When I run behavex with multiple v2 tag arguments "not @NONEXISTENT" and "@PASSING_TAG_1"
+    When I run behavex with multiple v2 tag arguments "@AUTORETRY" and "not @AUTORETRY_PERMANENT_FAILURE"
     Then the execution should succeed
-    And I should see scenarios matching the expression executed
+    And I should see exactly "2" scenarios executed for complex multiple arguments
 
   @TAG_EXPRESSIONS_V2 @MULTIPLE_TAGS
   Scenario: Multiple v2 tag arguments with parentheses
-    When I run behavex with multiple v2 tag arguments "@PASSING_TAG_1" and "not @NONEXISTENT"
+    When I run behavex with multiple v2 tag arguments "@PRIORITY_TEST" and "not @PRIORITY_001"
     Then the execution should succeed
-    And I should see scenarios matching the expression executed
+    And I should see exactly "2" scenarios executed for parentheses multiple arguments
 
   @TAG_EXPRESSIONS_V2 @MULTIPLE_TAGS
   Scenario: Three v2 tag arguments should be merged properly
-    When I run behavex with three v2 tag arguments "not @NONEXISTENT" and "@PASSING_TAG_1" and "not @SKIP"
+    When I run behavex with three v2 tag arguments "@AUTORETRY" and "not @AUTORETRY_PERMANENT_FAILURE" and "not @SKIP"
     Then the execution should succeed
-    And I should see scenarios matching the expression executed
+    And I should see exactly "2" scenarios executed for three arguments
 
   @TAG_EXPRESSIONS_V2 @MULTIPLE_TAGS
   Scenario: Mixed v1 and v2 multiple arguments should use v1 processing

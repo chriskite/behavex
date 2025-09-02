@@ -445,14 +445,14 @@ def match_for_execution_v2(tags, tags_filter):
         # Parse the tag expression using Behave's native parser
         tag_expression = make_tag_expression(normalized_filter)
 
-        # Convert tags to format expected by Behave parser (WITH @)
-        # Behave parser expects tag names WITH @ prefix
+        # Convert tags to format expected by Behave parser (WITHOUT @)
+        # Behave's tag expression evaluator expects tag names WITHOUT @ prefix
         normalized_tags = []
         for tag in tags:
             if tag:  # Skip empty tags
-                # Ensure tag starts with @ for Behave parser
-                if not tag.startswith('@'):
-                    normalized_tags.append('@' + tag)
+                # Remove @ prefix if present (Behave evaluator expects plain tag names)
+                if tag.startswith('@'):
+                    normalized_tags.append(tag[1:])  # Remove the @
                 else:
                     normalized_tags.append(tag)
 
