@@ -154,3 +154,39 @@ Feature: Tag Expressions v2 (Behave 1.3.0+ Style) Support
     When I run behavex with multiple v1 tag arguments "~@NONEXISTENT" and "@PASSING_TAG_1"
     Then the execution should succeed
     And the legacy tag matching should be used for v1 arguments
+
+  @TAG_EXPRESSIONS_V2 @WILDCARDS @ADVANCED
+  Scenario: Wildcard prefix matching with v2 expressions
+    When I run behavex with v2 tag expression "@AUTORETRY*"
+    Then the execution should succeed
+    And I should see scenarios matching the v2 expression
+
+  @TAG_EXPRESSIONS_V2 @WILDCARDS @ADVANCED
+  Scenario: Wildcard suffix matching with v2 expressions
+    When I run behavex with v2 tag expression "@*_TEST"
+    Then the execution should succeed
+    And I should see scenarios matching the v2 expression
+
+  @TAG_EXPRESSIONS_V2 @WILDCARDS @ADVANCED
+  Scenario: Wildcard substring matching with v2 expressions
+    When I run behavex with v2 tag expression "@*PRIORITY*"
+    Then the execution should succeed
+    And I should see scenarios matching the v2 expression
+
+  @TAG_EXPRESSIONS_V2 @WILDCARDS @ADVANCED
+  Scenario: Complex wildcard with boolean operations
+    When I run behavex with v2 tag expression "@AUTORETRY* and not @*PERMANENT*"
+    Then the execution should succeed
+    And I should see scenarios matching the v2 expression
+
+  @TAG_EXPRESSIONS_V2 @WILDCARDS @ADVANCED
+  Scenario: Multiple wildcards with OR operation
+    When I run behavex with v2 tag expression "@ORDER* or @PRIORITY*"
+    Then the execution should succeed
+    And I should see scenarios matching the v2 expression
+
+  @TAG_EXPRESSIONS_V2 @WILDCARDS @CORNER_CASE
+  Scenario: Wildcard with parentheses and complex logic
+    When I run behavex with v2 tag expression "(@PASSING* or @IMAGE*) and not @*FAILING*"
+    Then the execution should succeed
+    And I should see scenarios matching the v2 expression

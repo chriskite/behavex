@@ -185,6 +185,7 @@ def _detect_tag_expression_version():
             ' not ',     # Boolean NOT operator
             '(',         # Grouping with parentheses
             ')',         # Grouping with parentheses
+            '*',         # Wildcard matching (v2 feature)
         ]
 
         # Check for v2 patterns
