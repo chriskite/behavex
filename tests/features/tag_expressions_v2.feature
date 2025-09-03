@@ -190,3 +190,57 @@ Feature: Tag Expressions v2 (Behave 1.3.0+ Style) Support
     When I run behavex with v2 tag expression "(@PASSING* or @IMAGE*) and not @*FAILING*"
     Then the execution should succeed
     And I should see scenarios matching the v2 expression
+
+  @TAG_EXPRESSIONS_V2 @ADVANCED @DEEP_NESTING
+  Scenario: Deeply nested parentheses with multiple levels
+    When I run behavex with v2 tag expression "(((@AUTORETRY or @PRIORITY_TEST) and not @AUTORETRY_PERMANENT_FAILURE) or (@ORDER_001 and @ORDERED_TEST))"
+    Then the execution should succeed
+    And I should see scenarios matching the v2 expression
+
+  @TAG_EXPRESSIONS_V2 @ADVANCED @NUMERIC_TAGS
+  Scenario: Complex expressions with numeric tag suffixes
+    When I run behavex with v2 tag expression "(@PRIORITY_001 or @PRIORITY_002 or @PRIORITY_003) and @PRIORITY_TEST"
+    Then the execution should succeed
+    And I should see scenarios matching the v2 expression
+
+  @TAG_EXPRESSIONS_V2 @ADVANCED @MIXED_PATTERNS
+  Scenario: Mixed wildcards and specific tags in complex expression
+    When I run behavex with v2 tag expression "(@AUTORETRY* and @*RECOVERABLE) or (@ORDER_001 and @ORDERED_TEST)"
+    Then the execution should succeed
+    And I should see scenarios matching the v2 expression
+
+  @TAG_EXPRESSIONS_V2 @WILDCARDS @ADVANCED
+  Scenario: Multiple wildcard patterns in single expression
+    When I run behavex with v2 tag expression "@*RETRY* and @*_RECOVERABLE"
+    Then the execution should succeed
+    And I should see scenarios matching the v2 expression
+
+  @TAG_EXPRESSIONS_V2 @CORNER_CASE @SPECIAL_CHARS
+  Scenario: Tags with underscores and numbers in complex expressions
+    When I run behavex with v2 tag expression "@PASSING_TAG_3 and (@PASSING_TAG_3_1 or @PASSING_TAG_3_2)"
+    Then the execution should succeed
+    And I should see scenarios matching the v2 expression
+
+  @TAG_EXPRESSIONS_V2 @ADVANCED @LONG_EXPRESSION
+  Scenario: Very long complex expression with multiple operators
+    When I run behavex with v2 tag expression "(@AUTORETRY or @PRIORITY_TEST or @ORDERED_TEST or @MIXED_TEST) and not (@AUTORETRY_PERMANENT_FAILURE or @SKIP) and (@*_001 or @*_002 or @*_003)"
+    Then the execution should succeed
+    And I should see scenarios matching the v2 expression
+
+  @TAG_EXPRESSIONS_V2 @WILDCARDS @EDGE_CASE
+  Scenario: Wildcard matching with NOT operations
+    When I run behavex with v2 tag expression "@AUTORETRY* and not @*PERMANENT* and not @*_3 and not @*_5"
+    Then the execution should succeed
+    And I should see scenarios matching the v2 expression
+
+  @TAG_EXPRESSIONS_V2 @ADVANCED @SUBJECT_TAGS
+  Scenario: Complex expressions with subject-style tags
+    When I run behavex with v2 tag expression "@*ALLURE* and not @MALFORMED*"
+    Then the execution should succeed
+    And I should see scenarios matching the v2 expression
+
+  @TAG_EXPRESSIONS_V2 @CORNER_CASE @PRODUCTION_TAGS
+  Scenario: Production filtering with complex logic
+    When I run behavex with v2 tag expression "(@IMAGE_ATTACHMENT or @AUTORETRY) and not @NON_PRODUCTION"
+    Then the execution should succeed
+    And I should see scenarios matching the v2 expression
