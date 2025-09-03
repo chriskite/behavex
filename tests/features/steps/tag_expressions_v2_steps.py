@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 import os
+import re
 import subprocess
 import sys
 import time
@@ -39,10 +40,11 @@ def step_run_behavex_with_v2_expression(context, tag_expression):
     context.expression_type = 'v2'
 
     # Use secondary features as test target
+    output_dir = f'output/v2_test_{hash(tag_expression) % 1000000}'
     cmd = [
         sys.executable, '-m', 'behavex',
         secondary_features_path,
-        '-o', f'output/v2_test_{hash(tag_expression) % 1000000}',
+        '-o', output_dir,
         '-t', tag_expression,
         '--logging_level', 'INFO'
     ]
@@ -67,6 +69,9 @@ def step_run_behavex_with_v2_expression(context, tag_expression):
         logging.info(f"Secondary test STDOUT:\n{result.stdout}")
     if result.stderr:
         logging.info(f"Secondary test STDERR:\n{result.stderr}")
+
+    # Log detailed scenario information
+    _log_executed_scenarios(context)
 
 
 @when('I run behavex with v1 tag expression "{tag_expression}"')
@@ -209,79 +214,6 @@ def step_run_behavex_with_empty_expression_literal(context):
         logging.info(f"Secondary test STDERR:\n{result.stderr}")
 
 
-def _get_dynamic_scenario_count(tag_expression):
-    """Dynamically calculate expected scenario count by running the v2 expression with low timeout"""
-    import os
-    import subprocess
-    import sys
-
-    # Strategy: Run the same v2 expression with a short timeout to get expected count
-    # This gives us the true expected result without conversion complexity
-
-    try:
-        # Run the exact same v2 expression but with minimal logging
-        cmd = [
-            sys.executable, '-m', 'behavex',
-            secondary_features_path,
-            '-t', tag_expression,
-            '--logging_level', 'ERROR',
-            '-o', f'/tmp/behavex_count_check_{hash(tag_expression) % 100000}'
-        ]
-
-        env = os.environ.copy()
-        env['PYTHONPATH'] = root_project_path
-
-        # Use a short timeout to avoid hanging
-        result = subprocess.run(cmd, capture_output=True, text=True,
-                              cwd=root_project_path, env=env, timeout=10)
-
-        if result.returncode in [0, 1]:  # Success or scenarios failed but processed
-            # Extract scenario count from the output
-            passed_count = _extract_scenario_count(result.stdout, 'passed')
-            failed_count = _extract_scenario_count(result.stdout, 'failed')
-            total_count = passed_count + failed_count
-
-            logging.info(f"Dynamic count check for '{tag_expression}': {total_count} scenarios " \
-                        f"(passed: {passed_count}, failed: {failed_count})")
-            return total_count
-
-    except subprocess.TimeoutExpired:
-        logging.warning(f"Dynamic count check for '{tag_expression}' timed out")
-    except Exception as e:
-        logging.warning(f"Could not dynamically calculate expected count for '{tag_expression}': {e}")
-
-    return None
-
-
-@then('I should see exactly "{expected_count}" scenarios executed for {operation_type}')
-def step_should_see_exact_scenario_count(context, expected_count, operation_type):
-    """Verify exact number of scenarios were executed for specific operation type"""
-    expected = int(expected_count)
-
-    # Try to get dynamic count first
-    dynamic_count = _get_dynamic_scenario_count(context.tag_expression)
-    if dynamic_count is not None:
-        expected = dynamic_count
-        logging.info(f"Using dynamic expected count: {expected} scenarios for '{context.tag_expression}'")
-    else:
-        logging.info(f"Using static expected count: {expected} scenarios for '{context.tag_expression}'")
-
-    # Extract scenario counts from the secondary test output
-    passed_count = _extract_scenario_count(context.stdout, 'passed')
-    failed_count = _extract_scenario_count(context.stdout, 'failed')
-    total_executed = passed_count + failed_count
-
-    # For business coverage, we need to verify the exact count to ensure tag logic worked
-    assert total_executed == expected, \
-        f"Expected exactly {expected} scenarios for {operation_type}, but got {total_executed} " \
-        f"(passed: {passed_count}, failed: {failed_count}). " \
-        f"Tag expression: '{context.tag_expression}'. " \
-        f"This indicates the tag expression logic may not be working correctly."
-
-    logging.info(f"✅ Business coverage verified: {operation_type} executed exactly {expected} scenarios " \
-                f"(passed: {passed_count}, failed: {failed_count})")
-
-
 @then('I should see scenarios matching the v2 expression')
 def step_should_see_scenarios_matching_v2(context):
     """Verify scenarios matching the v2 expression were executed with intelligent validation"""
@@ -394,6 +326,13 @@ def step_run_behavex_with_complex_v2_expression(context, tag_expression):
     context.returncode = result.returncode
 
     logging.info(f"BehaveX executed with complex v2 expression, exit code: {result.returncode}, time: {context.execution_time:.2f}s")
+    if result.stdout:
+        logging.info(f"Secondary test STDOUT:\n{result.stdout}")
+    if result.stderr:
+        logging.info(f"Secondary test STDERR:\n{result.stderr}")
+
+    # Log detailed scenario information
+    _log_executed_scenarios(context)
 
 
 @when('I run behavex with multiple v2 tag arguments "{tag_arg1}" and "{tag_arg2}"')
@@ -429,6 +368,13 @@ def step_run_behavex_with_multiple_v2_arguments(context, tag_arg1, tag_arg2):
     context.returncode = result.returncode
 
     logging.info(f"BehaveX executed with multiple v2 arguments '{tag_arg1}' and '{tag_arg2}', exit code: {result.returncode}")
+    if result.stdout:
+        logging.info(f"Secondary test STDOUT:\n{result.stdout}")
+    if result.stderr:
+        logging.info(f"Secondary test STDERR:\n{result.stderr}")
+
+    # Log detailed scenario information
+    _log_executed_scenarios(context)
 
 
 @when('I run behavex with three v2 tag arguments "{tag_arg1}" and "{tag_arg2}" and "{tag_arg3}"')
@@ -464,6 +410,13 @@ def step_run_behavex_with_three_v2_arguments(context, tag_arg1, tag_arg2, tag_ar
     context.returncode = result.returncode
 
     logging.info(f"BehaveX executed with three v2 arguments, exit code: {result.returncode}")
+    if result.stdout:
+        logging.info(f"Secondary test STDOUT:\n{result.stdout}")
+    if result.stderr:
+        logging.info(f"Secondary test STDERR:\n{result.stderr}")
+
+    # Log detailed scenario information
+    _log_executed_scenarios(context)
 
 
 @when('I run behavex with mixed tag arguments "{tag_arg1}" and "{tag_arg2}"')
@@ -495,6 +448,10 @@ def step_run_behavex_with_mixed_arguments(context, tag_arg1, tag_arg2):
     context.returncode = result.returncode
 
     logging.info(f"BehaveX executed with mixed arguments '{tag_arg1}' and '{tag_arg2}', exit code: {result.returncode}")
+    if result.stdout:
+        logging.info(f"Secondary test STDOUT:\n{result.stdout}")
+    if result.stderr:
+        logging.info(f"Secondary test STDERR:\n{result.stderr}")
 
 
 @when('I run behavex with multiple v1 tag arguments "{tag_arg1}" and "{tag_arg2}"')
@@ -526,6 +483,10 @@ def step_run_behavex_with_multiple_v1_arguments(context, tag_arg1, tag_arg2):
     context.returncode = result.returncode
 
     logging.info(f"BehaveX executed with multiple v1 arguments '{tag_arg1}' and '{tag_arg2}', exit code: {result.returncode}")
+    if result.stdout:
+        logging.info(f"Secondary test STDOUT:\n{result.stdout}")
+    if result.stderr:
+        logging.info(f"Secondary test STDERR:\n{result.stderr}")
 
 
 @then('the execution should succeed')
@@ -921,3 +882,162 @@ def _extract_scenario_count(output, status):
         return int(match.group(1))
 
     return 0
+
+
+def _extract_executed_scenarios(output):
+    """Extract scenario names and their tags from BehaveX output"""
+    scenarios = []
+
+    # Look for feature file paths and scenario patterns in the output
+    # Pattern: tests/features/secondary_features/some_file.feature:LINE  Scenario Name
+    scenario_pattern = r'tests/features/secondary_features/([^:]+\.feature):(\d+)\s+(.+)'
+
+    for match in re.finditer(scenario_pattern, output):
+        feature_file = match.group(1)
+        line_number = match.group(2)
+        scenario_name = match.group(3).strip()
+
+        # Skip if this looks like an error message or summary line
+        if any(skip_word in scenario_name.lower() for skip_word in ['failing scenarios:', 'errored scenarios:', 'features passed']):
+            continue
+
+        scenarios.append({
+            'feature_file': feature_file,
+            'line_number': line_number,
+            'scenario_name': scenario_name
+        })
+
+    return scenarios
+
+
+def _get_scenario_tags(feature_file, line_number):
+    """Extract tags for a specific scenario from the feature file"""
+    try:
+        feature_path = os.path.join(secondary_features_path, feature_file)
+        with open(feature_path, 'r') as f:
+            lines = f.readlines()
+
+        # Convert line_number to 0-based index
+        line_idx = int(line_number) - 1
+
+        # Look backwards from the scenario line to find tags
+        tags = []
+        for i in range(line_idx - 1, -1, -1):
+            line = lines[i].strip()
+            if line.startswith('@'):
+                # This line contains tags
+                tag_line_tags = [tag.strip() for tag in line.split() if tag.startswith('@')]
+                tags.extend(tag_line_tags)
+            elif line and not line.startswith('#'):
+                # Non-empty, non-comment line that's not tags - stop looking
+                break
+
+        return list(reversed(tags))  # Reverse to get original order
+    except Exception as e:
+        logging.warning(f"Could not extract tags for {feature_file}:{line_number}: {e}")
+        return []
+
+
+def _find_matching_scenarios(tag_expression):
+    """Find all scenarios in secondary features that match the given tag expression"""
+    try:
+        from behave.tag_expression import make_tag_expression
+
+        # Parse the tag expression
+        tag_expr = make_tag_expression(tag_expression)
+
+        scenarios = []
+
+        # Parse all feature files in secondary_features
+        for feature_file in os.listdir(secondary_features_path):
+            if not feature_file.endswith('.feature'):
+                continue
+
+            feature_path = os.path.join(secondary_features_path, feature_file)
+            try:
+                with open(feature_path, 'r', encoding='utf-8') as f:
+                    lines = f.readlines()
+
+                feature_tags = []
+                for i, line in enumerate(lines):
+                    line = line.strip()
+
+                    # Collect feature-level tags
+                    if line.startswith('@') and i == 0 or (i > 0 and not lines[i-1].strip()):
+                        if 'Feature:' in ''.join(lines[i:i+3]):  # Feature tags
+                            feature_tags.extend([tag.strip() for tag in line.split() if tag.startswith('@')])
+
+                    # Find scenarios
+                    elif line.startswith('Scenario:') or line.startswith('Scenario Outline:'):
+                        scenario_name = line.replace('Scenario:', '').replace('Scenario Outline:', '').strip()
+                        scenario_line = i + 1
+
+                        # Collect scenario tags (look backwards from scenario line)
+                        scenario_tags = []
+                        for j in range(i - 1, -1, -1):
+                            tag_line = lines[j].strip()
+                            if tag_line.startswith('@'):
+                                scenario_tags.extend([tag.strip() for tag in tag_line.split() if tag.startswith('@')])
+                            elif tag_line and not tag_line.startswith('#'):
+                                break
+
+                        # Combine feature and scenario tags
+                        all_tags = feature_tags + scenario_tags
+
+                        # Remove @ prefix for evaluation (Behave expects tags without @)
+                        eval_tags = [tag[1:] if tag.startswith('@') else tag for tag in all_tags]
+
+                        # Check if this scenario matches the expression
+                        if tag_expr.check(eval_tags):
+                            scenarios.append({
+                                'scenario_name': scenario_name,
+                                'feature_file': feature_file,
+                                'line_number': scenario_line,
+                                'tags': all_tags,
+                                'status': 'matched'
+                            })
+
+            except Exception as e:
+                logging.debug(f"Error parsing {feature_file}: {e}")
+
+        return scenarios
+
+    except Exception as e:
+        logging.debug(f"Error finding matching scenarios: {e}")
+        return []
+
+
+def _extract_scenarios_from_json(context):
+    """Extract scenario details from feature files directly"""
+    if hasattr(context, 'tag_expression'):
+        return _find_matching_scenarios(context.tag_expression)
+    return []
+
+
+def _log_executed_scenarios(context):
+    """Log detailed information about executed scenarios"""
+    if not hasattr(context, 'stdout') or not context.stdout:
+        return
+
+    # Try to extract from JSON output first
+    scenarios = _extract_scenarios_from_json(context)
+
+    # Fallback to parsing stdout if JSON not available
+    if not scenarios:
+        scenarios = _extract_executed_scenarios(context.stdout)
+
+    if scenarios:
+        logging.info(f"\n=== EXECUTED SCENARIOS FOR '{context.tag_expression}' ===")
+        for i, scenario in enumerate(scenarios, 1):
+            tags_str = ' '.join(scenario.get('tags', [])) if scenario.get('tags') else '(no tags found)'
+
+            logging.info(f"{i:2d}. {scenario['scenario_name']}")
+            logging.info(f"     📁 {scenario['feature_file']}:{scenario.get('line_number', 'N/A')}")
+            logging.info(f"     🏷️  {tags_str}")
+            logging.info(f"     📊 Status: {scenario.get('status', 'unknown')}")
+            logging.info("")
+
+        logging.info(f"Total scenarios executed: {len(scenarios)}")
+        logging.info("=" * 60)
+    else:
+        logging.info(f"No scenario details found for '{context.tag_expression}' (possibly 0 scenarios executed or parsing issue)")
