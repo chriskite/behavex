@@ -1,6 +1,13 @@
 Version History
 ===============================================================================
 
+Version: 4.6.0
+-------------------------------------------------------------------------------
+
+ENHANCEMENTS:
+
+* Added native support for Tag Expressions v2 (Behave 1.3.0+ style) with comprehensive boolean logic capabilities. BehaveX now supports advanced tag filtering including boolean operators (and, or, not), parentheses grouping, wildcard matching (@prefix*, @*suffix, @*substring*), case-insensitive keywords, deeply nested expressions, and complex multi-level filtering. The implementation leverages Behave's internal tag expression parser when available (Behave 1.3.0+) eliminating external dependencies, while maintaining backward compatibility with v1 expressions and Behave 1.2.6. Added comprehensive test coverage with 39 test scenarios covering basic operations, advanced combinations, wildcards, edge cases, and corner cases to ensure robust functionality across all supported patterns.
+
 Version: 4.5.1
 -------------------------------------------------------------------------------
 
