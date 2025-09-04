@@ -14,7 +14,7 @@ FIXES:
 
 CONTRIBUTIONS:
 
-* Thanks to `OliverHill-Boost <https://github.com/OliverHill-Boost>`__ for reporting the strict ordering issue and suggesting the fix with scenario outlines in `Issue #225 <https://github.com/hrcorval/behavex/issues/225>`__.
+* Thanks to `OliverHill-Boost <https://github.com/OliverHill-Boost>`__ for reporting the strict ordering issue with scenario outlines and suggesting the fix in `Issue #225 <https://github.com/hrcorval/behavex/issues/225>`__.
 
 Version: 4.5.1
 -------------------------------------------------------------------------------
