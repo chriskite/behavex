@@ -15,6 +15,7 @@ FIXES:
 CONTRIBUTIONS:
 
 * Thanks to `OliverHill-Boost <https://github.com/OliverHill-Boost>`__ for reporting the strict ordering issue with scenario outlines and suggesting the fix in `Issue #225 <https://github.com/hrcorval/behavex/issues/225>`__.
+* Thanks to `qarampage <https://github.com/qarampage>`__ for their valuable insights and feature request that helped guide the research and development of Tag Expressions v2 support.
 
 Version: 4.5.1
 -------------------------------------------------------------------------------
