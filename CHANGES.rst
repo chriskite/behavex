@@ -1,6 +1,22 @@
 Version History
 ===============================================================================
 
+Version: 4.6.0
+-------------------------------------------------------------------------------
+
+ENHANCEMENTS:
+
+* Added native support for Tag Expressions v2 (Cucumber style, supported in Behave 1.3.0+) with comprehensive boolean logic capabilities. BehaveX now supports advanced tag filtering including boolean operators (and, or, not), parentheses grouping, wildcard matching (@prefix*, @*suffix, @*substring*), case-insensitive keywords, deeply nested expressions, and complex multi-level filtering. The implementation leverages Behave's internal tag expression parser when available (Behave 1.3.0+) eliminating external dependencies, while maintaining backward compatibility with v1 expressions and Behave 1.2.6. Added comprehensive test coverage with 39 test scenarios covering basic operations, advanced combinations, wildcards, edge cases, and corner cases to ensure robust functionality across all supported patterns.
+
+FIXES:
+
+* Fixed strict test execution ordering issue where scenario outlines with the same ORDER tag were running sequentially instead of in parallel. Scenarios with identical ORDER tags (e.g., @ORDER_001) now correctly run in parallel within their order group, while different ORDER groups still execute sequentially as intended with --order-tests-strict.
+
+CONTRIBUTIONS:
+
+* Thanks to `OliverHill-Boost <https://github.com/OliverHill-Boost>`__ for reporting the strict ordering issue with scenario outlines and suggesting the fix in `Issue #225 <https://github.com/hrcorval/behavex/issues/225>`__.
+* Thanks to `qarampage <https://github.com/qarampage>`__ for their valuable insights and feature request that helped guide the research and development of Tag Expressions v2 support.
+
 Version: 4.5.1
 -------------------------------------------------------------------------------
 
